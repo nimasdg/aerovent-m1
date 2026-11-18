@@ -38,10 +38,6 @@ if 'show_account' not in st.session_state:
     st.session_state.show_account = False
 
 # --- CORE CSS (APPLIED TO ALL PAGES) ---
-# Palette (one family, so everything harmonises):
-#   Navy   #0B2A4A  text / headings        Ocean  #1B6FB5  links / secondary accent
-#   Teal   #14A89B  primary action         Mint   #7FD8CC  highlights
-#   Ice    #EAF4FB  page tint              Glass  rgba(255,255,255,.55) surfaces
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
@@ -235,13 +231,27 @@ st.markdown("""
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ---------- IMAGES ---------- */
-    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
+    /* ---------- IMAGES (Updated for Technical Click-to-Enlarge) ---------- */
+    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); position: relative; }
     [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); }
     [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
     [data-testid="stImage"]:hover img { transform: scale(1.04); }
     [data-testid="stImage"]:active { transform: scale(.985); }
     [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
+
+    /* TECHNICAL LOGIC: Stretches Streamlit's native invisible fullscreen button over the whole image area */
+    [data-testid="stImage"] button {
+        position: absolute !important;
+        width: 100% !important;
+        height: 100% !important;
+        top: 0 !important;
+        left: 0 !important;
+        opacity: 0 !important;
+        cursor: zoom-in !important;
+        display: block !important;
+        visibility: visible !important;
+        z-index: 10 !important;
+    }
 
     /* ---------- SCROLL CUE ---------- */
     @keyframes gentle-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
