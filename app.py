@@ -38,6 +38,10 @@ if 'show_account' not in st.session_state:
     st.session_state.show_account = False
 
 # --- CORE CSS (APPLIED TO ALL PAGES) ---
+# Palette (one family, so everything harmonises):
+#   Navy   #0B2A4A  text / headings        Ocean  #1B6FB5  links / secondary accent
+#   Teal   #14A89B  primary action         Mint   #7FD8CC  highlights
+#   Ice    #EAF4FB  page tint              Glass  rgba(255,255,255,.55) surfaces
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
@@ -231,35 +235,51 @@ st.markdown("""
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ---------- IMAGES (Updated for Technical Click-to-Enlarge) ---------- */
-    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); position: relative !important; }
+    /* ---------- IMAGES (FIXED for Fullscreen Click) ---------- */
+    [data-testid="stImage"] { 
+        border-radius: 22px; 
+        overflow: hidden; 
+        box-shadow: var(--shadow-md); 
+        transition: transform .4s var(--ease), box-shadow .4s var(--ease); 
+        position: relative !important; 
+        display: block !important;
+    }
     [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); }
     [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
     [data-testid="stImage"]:hover img { transform: scale(1.04); }
     [data-testid="stImage"]:active { transform: scale(.985); }
     [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
 
-    /* TECHNICAL LOGIC: Force the native fullscreen button wrapper to cover the entire image */
-    [data-testid="stImage"] > div:not(:first-child), 
+    /* TECHNICAL FIX: Force Streamlit's fullscreen wrapper to cover the entire image */
     [data-testid="StyledFullScreenButton"] {
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        opacity: 0 !important; /* Hides the native icon entirely */
+        background: transparent !important;
+        opacity: 1 !important; /* Force it to be active without hovering */
         z-index: 99 !important;
-        display: block !important;
-        visibility: visible !important;
     }
-    [data-testid="stImage"] button[title="View fullscreen"],
+    
+    /* Make the button stretch fully and become invisible but clickable */
     [data-testid="StyledFullScreenButton"] button {
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        cursor: zoom-in !important;
+        background: transparent !important; /* Transparent instead of opacity:0 to ensure clickability */
+        border: none !important;
+        cursor: zoom-in !important; /* Mouse turns to magnifying glass */
+        opacity: 1 !important;
+    }
+    
+    /* Hide the native expand arrows icon */
+    [data-testid="StyledFullScreenButton"] button svg {
+        display: none !important;
     }
 
     /* ---------- SCROLL CUE ---------- */
