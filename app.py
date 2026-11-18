@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import base64
 import os
 
@@ -228,17 +227,45 @@ st.markdown("""
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ---------- IMAGES ---------- */
-    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
-    /* نشانگر موس به شکل ذره بین در می‌آید تا حس زوم را القا کند */
-    [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); cursor: zoom-in !important; }
-    [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
-    [data-testid="stImage"]:hover img { transform: scale(1.04); }
-    [data-testid="stImage"]:active { transform: scale(.985); }
+    /* ---------- IMAGES (FIXED FOR FULLSCREEN CLICK) ---------- */
+    [data-testid="stImage"] { 
+        border-radius: 22px; 
+        overflow: hidden; 
+        box-shadow: var(--shadow-md); 
+        transition: transform .4s var(--ease), box-shadow .4s var(--ease); 
+        position: relative !important; 
+        display: block !important;
+    }
+    [data-testid="stImage"] img { 
+        border-radius: 22px; 
+        transition: transform .6s var(--ease); 
+    }
+    [data-testid="stImage"]:hover { 
+        transform: translateY(-4px); 
+        box-shadow: 0 22px 50px rgba(11,42,74,.2); 
+    }
+    [data-testid="stImage"]:hover img { 
+        transform: scale(1.04); 
+    }
     [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
 
-    /* مخفی کردن کامل دکمه پیش‌فرض و آزاردهنده استریم‌لیت */
-    [data-testid="StyledFullScreenButton"] { opacity: 0 !important; pointer-events: none !important; }
+    /* STRETCH THE FULLSCREEN BUTTON */
+    [data-testid="StyledFullScreenButton"] {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important; /* Make invisible but clickable */
+        z-index: 999 !important; /* Place it on top of the image */
+    }
+    [data-testid="StyledFullScreenButton"] button {
+        width: 100% !important;
+        height: 100% !important;
+        cursor: zoom-in !important; /* Cursor indicates zoom capability */
+        border: none !important;
+        background: transparent !important;
+    }
 
     /* ---------- SCROLL CUE ---------- */
     @keyframes gentle-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
@@ -253,7 +280,7 @@ st.markdown("""
     .scroll-cue:hover { background: linear-gradient(135deg, var(--teal), var(--ocean)); color: #fff !important; box-shadow: 0 12px 28px rgba(20,168,155,.35); }
     .scroll-cue:active { transform: scale(.94); }
 
-    /* Hero entrance */
+    /* Hero entrance (the single orchestrated moment) */
     @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
     h1 { animation: rise .7s var(--ease) both; }
     .hero-subtitle { animation: rise .7s .12s var(--ease) both; }
@@ -585,26 +612,3 @@ else:
     if st.session_state.language == 'EN': page_english_global()
     elif st.session_state.language == 'DE': page_german()
     elif st.session_state.language == 'AR': page_arabic()
-
-# --- JAVASCRIPT INJECTION FOR NATIVE IMAGE ZOOM ---
-# این کد مخفی تمامیکلیک‌های کاربر روی عکس‌ها را شناسایی کرده و هسته استریم‌لیت را مجبور می‌کند عکس را در حالت تمام‌صفحه باز کند
-components.html(
-    """
-    <script>
-    const parentDoc = window.parent.document;
-    parentDoc.addEventListener('click', function(e) {
-        if (e.target.tagName === 'IMG') {
-            const imgContainer = e.target.closest('[data-testid="stImage"]');
-            if (imgContainer) {
-                const expandBtn = imgContainer.querySelector('button[title="View fullscreen"]');
-                if (expandBtn) {
-                    expandBtn.click();
-                }
-            }
-        }
-    });
-    </script>
-    """,
-    height=0,
-    width=0,
-)
