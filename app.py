@@ -232,25 +232,34 @@ st.markdown("""
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
     /* ---------- IMAGES (Updated for Technical Click-to-Enlarge) ---------- */
-    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); position: relative; }
+    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); position: relative !important; }
     [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); }
     [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
     [data-testid="stImage"]:hover img { transform: scale(1.04); }
     [data-testid="stImage"]:active { transform: scale(.985); }
     [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
 
-    /* TECHNICAL LOGIC: Stretches Streamlit's native invisible fullscreen button over the whole image area */
-    [data-testid="stImage"] button {
+    /* TECHNICAL LOGIC: Force the native fullscreen button wrapper to cover the entire image */
+    [data-testid="stImage"] > div:not(:first-child), 
+    [data-testid="StyledFullScreenButton"] {
         position: absolute !important;
-        width: 100% !important;
-        height: 100% !important;
         top: 0 !important;
         left: 0 !important;
-        opacity: 0 !important;
-        cursor: zoom-in !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important; /* Hides the native icon entirely */
+        z-index: 99 !important;
         display: block !important;
         visibility: visible !important;
-        z-index: 10 !important;
+    }
+    [data-testid="stImage"] button[title="View fullscreen"],
+    [data-testid="StyledFullScreenButton"] button {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        cursor: zoom-in !important;
     }
 
     /* ---------- SCROLL CUE ---------- */
