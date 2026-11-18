@@ -235,7 +235,7 @@ st.markdown("""
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ---------- IMAGES (FIXED for Fullscreen Click) ---------- */
+    /* ---------- IMAGES (BULLETPROOF FULLSCREEN OVERRIDE) ---------- */
     [data-testid="stImage"] { 
         border-radius: 22px; 
         overflow: hidden; 
@@ -244,41 +244,40 @@ st.markdown("""
         position: relative !important; 
         display: block !important;
     }
-    [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); }
-    [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
-    [data-testid="stImage"]:hover img { transform: scale(1.04); }
-    [data-testid="stImage"]:active { transform: scale(.985); }
-    [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
+    [data-testid="stImage"] img { 
+        border-radius: 22px; 
+        transition: transform .6s var(--ease); 
+    }
+    [data-testid="stImage"]:hover { 
+        transform: translateY(-4px); 
+        box-shadow: 0 22px 50px rgba(11,42,74,.2); 
+    }
+    [data-testid="stImage"]:hover img { 
+        transform: scale(1.04); 
+    }
+    [data-testid="stImageCaption"] { 
+        color: var(--ink-soft); font-weight: 600; text-align: center; 
+    }
 
-    /* TECHNICAL FIX: Force Streamlit's fullscreen wrapper to cover the entire image */
-    [data-testid="StyledFullScreenButton"] {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        background: transparent !important;
-        opacity: 1 !important; /* Force it to be active without hovering */
-        z-index: 99 !important;
-    }
-    
-    /* Make the button stretch fully and become invisible but clickable */
-    [data-testid="StyledFullScreenButton"] button {
+    /* Force the native fullscreen button to completely cover the image for zooming */
+    [data-testid="stImage"] button[title="View fullscreen"] {
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        background: transparent !important; /* Transparent instead of opacity:0 to ensure clickability */
+        background-color: transparent !important;
+        color: transparent !important;
         border: none !important;
-        cursor: zoom-in !important; /* Mouse turns to magnifying glass */
-        opacity: 1 !important;
+        box-shadow: none !important;
+        opacity: 1 !important; /* Forces the button to remain active to receive clicks */
+        visibility: visible !important;
+        display: block !important;
+        cursor: zoom-in !important; /* Visual indicator that it's clickable */
+        z-index: 9999 !important; /* Place it on top of all other image layers */
     }
-    
-    /* Hide the native expand arrows icon */
-    [data-testid="StyledFullScreenButton"] button svg {
+    /* Hide the small magnifying/expand SVG icon */
+    [data-testid="stImage"] button[title="View fullscreen"] svg {
         display: none !important;
     }
 
