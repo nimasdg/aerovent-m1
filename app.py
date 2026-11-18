@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import base64
 import os
 
@@ -38,6 +39,10 @@ if 'show_account' not in st.session_state:
     st.session_state.show_account = False
 
 # --- CORE CSS (APPLIED TO ALL PAGES) ---
+# Palette (one family, so everything harmonises):
+#   Navy   #0B2A4A  text / headings        Ocean  #1B6FB5  links / secondary accent
+#   Teal   #14A89B  primary action         Mint   #7FD8CC  highlights
+#   Ice    #EAF4FB  page tint              Glass  rgba(255,255,255,.55) surfaces
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
@@ -88,6 +93,7 @@ st.markdown("""
     .hero-subtitle { font-size: 1.25rem; color: var(--ocean); margin: .2rem 0 1.6rem; line-height: 1.55; font-weight: 500; }
 
     /* ---------- BUTTONS ---------- */
+    /* Secondary (default): glass pill used for navbar + region + cart actions */
     .stButton > button, .stDownloadButton > button {
         position: relative; overflow: hidden;
         background: var(--glass-strong); color: var(--navy);
@@ -102,6 +108,7 @@ st.markdown("""
         background: #FFFFFF; color: var(--teal-dark); border-color: var(--mint);
         transform: translateY(-3px); box-shadow: 0 12px 28px rgba(20,168,155,0.22);
     }
+    /* Primary (e.g. Add to Cart): teal gradient */
     .stButton > button[kind="primary"] {
         background: linear-gradient(135deg, var(--teal) 0%, var(--ocean) 100%);
         color: #FFFFFF; border: 1px solid rgba(255,255,255,.35);
@@ -111,6 +118,7 @@ st.markdown("""
         background: linear-gradient(135deg, var(--teal-dark) 0%, var(--navy) 100%);
         color: #FFFFFF; box-shadow: 0 16px 34px rgba(11,42,74,0.35);
     }
+    /* Shine sweep on hover */
     .stButton > button::before, .stDownloadButton > button::before {
         content: ""; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
         background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
@@ -118,6 +126,7 @@ st.markdown("""
     }
     .stButton > button:hover::before, .stDownloadButton > button:hover::before { left: 130%; }
 
+    /* CLICK EFFECT: press-in + expanding ring on the clicked element */
     @keyframes click-ring {
         0%   { box-shadow: 0 0 0 0 rgba(20,168,155,0.55); }
         100% { box-shadow: 0 0 0 16px rgba(20,168,155,0); }
@@ -227,45 +236,13 @@ st.markdown("""
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ---------- IMAGES (FIXED FOR FULLSCREEN CLICK) ---------- */
-    [data-testid="stImage"] { 
-        border-radius: 22px; 
-        overflow: hidden; 
-        box-shadow: var(--shadow-md); 
-        transition: transform .4s var(--ease), box-shadow .4s var(--ease); 
-        position: relative !important; 
-        display: block !important;
-    }
-    [data-testid="stImage"] img { 
-        border-radius: 22px; 
-        transition: transform .6s var(--ease); 
-    }
-    [data-testid="stImage"]:hover { 
-        transform: translateY(-4px); 
-        box-shadow: 0 22px 50px rgba(11,42,74,.2); 
-    }
-    [data-testid="stImage"]:hover img { 
-        transform: scale(1.04); 
-    }
+    /* ---------- IMAGES ---------- */
+    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
+    [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); }
+    [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
+    [data-testid="stImage"]:hover img { transform: scale(1.04); }
+    [data-testid="stImage"]:active { transform: scale(.985); }
     [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
-
-    /* STRETCH THE FULLSCREEN BUTTON */
-    [data-testid="StyledFullScreenButton"] {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        opacity: 0 !important; /* Make invisible but clickable */
-        z-index: 999 !important; /* Place it on top of the image */
-    }
-    [data-testid="StyledFullScreenButton"] button {
-        width: 100% !important;
-        height: 100% !important;
-        cursor: zoom-in !important; /* Cursor indicates zoom capability */
-        border: none !important;
-        background: transparent !important;
-    }
 
     /* ---------- SCROLL CUE ---------- */
     @keyframes gentle-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
@@ -279,6 +256,47 @@ st.markdown("""
     }
     .scroll-cue:hover { background: linear-gradient(135deg, var(--teal), var(--ocean)); color: #fff !important; box-shadow: 0 12px 28px rgba(20,168,155,.35); }
     .scroll-cue:active { transform: scale(.94); }
+
+    /* ---------- RIPPLE (click effect) ---------- */
+    [data-baseweb="tab"] { position: relative; overflow: hidden; }
+    .aerivo-ripple {
+        position: absolute; border-radius: 50%; pointer-events: none;
+        background: rgba(255,255,255,0.65); transform: scale(0);
+        animation: aerivo-ripple .6s ease-out forwards;
+    }
+    .stButton > button:not([kind="primary"]) .aerivo-ripple,
+    [data-baseweb="tab"]:not([aria-selected="true"]) .aerivo-ripple { background: rgba(20,168,155,0.35); }
+    @keyframes aerivo-ripple { to { transform: scale(4); opacity: 0; } }
+
+    /* ---------- IMAGE LIGHTBOX ---------- */
+    [data-testid="stImage"] img { cursor: zoom-in; }
+    .aerivo-lightbox {
+        position: fixed; inset: 0; z-index: 999999; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 14px; padding: 4vh 4vw;
+        background: rgba(8, 28, 52, 0.72);
+        backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+        animation: lb-fade .25s ease-out both;
+    }
+    .aerivo-lightbox img {
+        max-width: 92vw; max-height: 82vh; object-fit: contain; border-radius: 20px; cursor: default;
+        border: 1px solid rgba(255,255,255,0.45); box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        animation: lb-pop .35s cubic-bezier(.22,.8,.24,1) both;
+    }
+    .aerivo-lightbox .lb-caption { color: #fff; font-weight: 700; text-align: center; font-family: 'Manrope','Noto Sans Arabic',sans-serif; }
+    .aerivo-lightbox .lb-close {
+        position: absolute; top: 22px; right: 22px; width: 52px; height: 52px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
+        background: rgba(255,255,255,0.9); color: #0B2A4A; border: 1px solid rgba(255,255,255,0.9);
+        box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+        transition: transform .25s cubic-bezier(.22,.8,.24,1), background .25s, color .25s;
+    }
+    .aerivo-lightbox .lb-close:hover { background: #14A89B; color: #fff; transform: rotate(90deg) scale(1.08); }
+    .aerivo-lightbox .lb-close:active { transform: rotate(90deg) scale(0.9); }
+    .aerivo-lightbox .lb-close:focus-visible { outline: 3px solid #7FD8CC; outline-offset: 3px; }
+    @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lb-pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+    /* hide the zero-height helper iframe that carries the script */
+    [data-testid="stElementContainer"]:has(iframe[height="0"]) { height: 0; margin: 0 !important; overflow: hidden; }
 
     /* Hero entrance (the single orchestrated moment) */
     @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
@@ -378,6 +396,7 @@ def render_navbar():
 
 # --- REUSABLE UI BLOCKS ---
 def render_scroll_cue(text):
+    # Clickable link that scrolls to the #gallery-section ID
     st.markdown(f"""
         <div class='scroll-container'>
             <a href="#gallery-section" class='scroll-cue'>{text} ↓</a>
@@ -385,6 +404,7 @@ def render_scroll_cue(text):
     """, unsafe_allow_html=True)
 
 def render_album_gallery():
+    # ID target for smooth scrolling
     st.markdown("<div id='gallery-section'></div>", unsafe_allow_html=True)
     st.markdown("<br><hr>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center; margin-bottom: 1rem;'>Aerivo M1 Environments & Details</h3>", unsafe_allow_html=True)
@@ -394,34 +414,34 @@ def render_album_gallery():
     with tab1:
         c1, c2 = st.columns(2)
         with c1:
-            try: st.image("Aerivo (8).png", caption="ICU Clinical Setting", use_container_width=True)
+            try: st.image("Aerivo (8).jpg", caption="ICU Clinical Setting", use_container_width=True)
             except: pass
         with c2:
-            try: st.image("Aerivo (9).png", caption="Operating Room Configuration", use_container_width=True)
+            try: st.image("Aerivo (9).jpg", caption="Operating Room Configuration", use_container_width=True)
             except: pass
 
     with tab2:
         c1, c2, c3 = st.columns(3)
         with c1:
-            try: st.image("Aerivo (10).png", caption="Ambulance Installation", use_container_width=True)
+            try: st.image("Aerivo (10).jpg", caption="Ambulance Installation", use_container_width=True)
             except: pass
         with c2:
-            try: st.image("Aerivo (11).png", caption="Helicopter Emergency Services", use_container_width=True)
+            try: st.image("Aerivo (11).jpg", caption="Helicopter Emergency Services", use_container_width=True)
             except: pass
         with c3:
-            try: st.image("Aerivo (2).png", caption="Field & Disaster Care", use_container_width=True)
+            try: st.image("Aerivo (2).jpg", caption="Field & Disaster Care", use_container_width=True)
             except: pass
 
     with tab3:
         c1, c2, c3 = st.columns(3)
         with c1:
-            try: st.image("Aerivo (3).png", caption="Front Control Panel & UI", use_container_width=True)
+            try: st.image("Aerivo (3).jpg", caption="Front Control Panel & UI", use_container_width=True)
             except: pass
         with c2:
-            try: st.image("Aerivo (4).png", caption="Rear View & Connectivity Ports", use_container_width=True)
+            try: st.image("Aerivo (4).jpg", caption="Rear View & Connectivity Ports", use_container_width=True)
             except: pass
         with c3:
-            try: st.image("Aerivo (5).png", caption="Accessories & Travel Kit", use_container_width=True)
+            try: st.image("Aerivo (5).jpg", caption="Accessories & Travel Kit", use_container_width=True)
             except: pass
 
 def render_tech_specs_button(label="📄 Tech Specs"):
@@ -432,7 +452,7 @@ def render_tech_specs_button(label="📄 Tech Specs"):
 
 def render_main_product_image():
     try:
-        st.image("Aerivo (6).png", use_container_width=True)
+        st.image("Aerivo (6).jpg", use_container_width=True)
     except:
         st.info("Product Image Loading...")
 
@@ -550,7 +570,7 @@ def page_arabic():
 # --- ROUTER & CONDITIONAL CSS ---
 if st.session_state.language is None:
     # 1. GENERATE BACKGROUND FOR GATEWAY
-    bg_base64 = get_base64_of_bin_file("Aerivo (7).png")
+    bg_base64 = get_base64_of_bin_file("Aerivo (7).jpg")
 
     # 2. INJECT FULL-SCREEN CSS FOR GATEWAY
     st.markdown(f"""
@@ -612,3 +632,77 @@ else:
     if st.session_state.language == 'EN': page_english_global()
     elif st.session_state.language == 'DE': page_german()
     elif st.session_state.language == 'AR': page_arabic()
+
+# --- CLIENT-SIDE EFFECTS: click ripple + image lightbox (with close button) ---
+# Streamlit strips <script> from markdown, so a zero-height component installs
+# event listeners once on the parent page; they survive Streamlit reruns.
+components.html("""
+<script>
+(function () {
+  const doc = window.parent.document;
+  if (window.parent.__aerivoFx) return;
+  window.parent.__aerivoFx = true;
+
+  // 1) Ripple on buttons and tabs
+  doc.addEventListener('pointerdown', function (e) {
+    const el = e.target.closest('.stButton button, .stDownloadButton button, [data-baseweb="tab"]');
+    if (!el || el.disabled) return;
+    const r = el.getBoundingClientRect();
+    const size = Math.max(r.width, r.height);
+    const dot = doc.createElement('span');
+    dot.className = 'aerivo-ripple';
+    dot.style.width = dot.style.height = size + 'px';
+    dot.style.left = (e.clientX - r.left - size / 2) + 'px';
+    dot.style.top = (e.clientY - r.top - size / 2) + 'px';
+    el.appendChild(dot);
+    setTimeout(function () { dot.remove(); }, 700);
+  }, true);
+
+  // 2) Lightbox for st.image pictures
+  function closeBox() {
+    const box = doc.querySelector('.aerivo-lightbox');
+    if (box) box.remove();
+    doc.body.style.overflow = '';
+  }
+  function openBox(img) {
+    closeBox();
+    const cap = img.closest('[data-testid="stImage"]');
+    const capEl = cap ? cap.querySelector('[data-testid="stImageCaption"]') : null;
+    const box = doc.createElement('div');
+    box.className = 'aerivo-lightbox';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+
+    const btn = doc.createElement('button');
+    btn.className = 'lb-close';
+    btn.setAttribute('aria-label', 'Close image');
+    btn.title = 'Close (Esc)';
+    btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>';
+    btn.addEventListener('click', closeBox);
+
+    const big = doc.createElement('img');
+    big.src = img.currentSrc || img.src;
+    big.alt = img.alt || '';
+    big.addEventListener('click', function (ev) { ev.stopPropagation(); });
+
+    box.appendChild(btn);
+    box.appendChild(big);
+    if (capEl && capEl.textContent.trim()) {
+      const c = doc.createElement('div');
+      c.className = 'lb-caption';
+      c.textContent = capEl.textContent.trim();
+      box.appendChild(c);
+    }
+    box.addEventListener('click', closeBox);   // click on the dark backdrop also closes
+    doc.body.appendChild(box);
+    doc.body.style.overflow = 'hidden';
+    btn.focus();
+  }
+  doc.addEventListener('click', function (e) {
+    const img = e.target.closest('[data-testid="stImage"] img');
+    if (img && !doc.querySelector('.aerivo-lightbox')) openBox(img);
+  });
+  doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeBox(); });
+})();
+</script>
+""", height=0)
