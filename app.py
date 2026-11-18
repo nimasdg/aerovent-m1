@@ -1,6 +1,6 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import base64
+import html
 import os
 
 # --- CONFIGURATION ---
@@ -236,13 +236,53 @@ st.markdown("""
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ---------- IMAGES ---------- */
-    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
-    [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); }
-    [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
-    [data-testid="stImage"]:hover img { transform: scale(1.04); }
-    [data-testid="stImage"]:active { transform: scale(.985); }
-    [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
+    /* ---------- IMAGES + CSS-ONLY LIGHTBOX ---------- */
+    .zoom-item { position: relative; margin: 0 0 1rem; }
+    .zoom-item img {
+        display: block; width: 100%; height: auto; border-radius: 22px; box-shadow: var(--shadow-md);
+        transition: transform .45s var(--ease), box-shadow .4s var(--ease);
+    }
+    .zoom-item .zoom-open { position: absolute; inset: 0; z-index: 2; border-radius: 22px; cursor: zoom-in; }
+    .zoom-item:hover img { transform: translateY(-4px) scale(1.015); box-shadow: 0 22px 50px rgba(11,42,74,.22); }
+    .zoom-item .zoom-open:active + img { transform: scale(.97); }
+    .zoom-badge {
+        position: absolute; top: 12px; right: 12px; z-index: 3; width: 34px; height: 34px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; pointer-events: none; font-size: 1rem;
+        background: var(--glass-strong); color: var(--navy); border: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px); box-shadow: var(--shadow-sm); opacity: 0; transform: scale(.8);
+        transition: opacity .25s var(--ease), transform .25s var(--ease);
+    }
+    .zoom-item:hover .zoom-badge { opacity: 1; transform: none; }
+    .zoom-cap { text-align: center; color: var(--ink-soft); font-weight: 600; font-size: .9rem; margin-top: .55rem; }
+    .zoom-backdrop, .zoom-close { display: none; }
+
+    /* Opened state: the same figure becomes a full-screen overlay (:target) */
+    .zoom-item:target {
+        position: fixed; inset: 0; z-index: 999999; margin: 0; padding: 4vh 4vw;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+        background: rgba(8, 28, 52, 0.78);
+        backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+        animation: lb-fade .25s ease-out both;
+    }
+    .zoom-item:target .zoom-open, .zoom-item:target .zoom-badge { display: none; }
+    .zoom-item:target .zoom-backdrop { display: block; position: absolute; inset: 0; z-index: 0; cursor: zoom-out; }
+    .zoom-item:target img {
+        position: relative; z-index: 1; width: auto; max-width: 92vw; max-height: 80vh; object-fit: contain;
+        transform: none !important; border: 1px solid rgba(255,255,255,0.45);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.5); animation: lb-pop .35s var(--ease) both;
+    }
+    .zoom-item:target .zoom-cap { position: relative; z-index: 1; color: #fff; margin: 0; font-size: 1rem; }
+    .zoom-item:target .zoom-close {
+        display: flex; position: fixed; top: 22px; right: 22px; z-index: 3; width: 54px; height: 54px;
+        border-radius: 50%; align-items: center; justify-content: center; text-decoration: none !important;
+        font-size: 1.6rem; font-weight: 800; line-height: 1; color: var(--navy) !important;
+        background: rgba(255,255,255,0.95); border: 1px solid #fff; box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+        transition: transform .25s var(--ease), background .25s var(--ease), color .25s var(--ease);
+    }
+    .zoom-item:target .zoom-close:hover { background: var(--teal); color: #fff !important; transform: rotate(90deg) scale(1.08); }
+    .zoom-item:target .zoom-close:active { transform: rotate(90deg) scale(.9); }
+    @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lb-pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; } }
 
     /* ---------- SCROLL CUE ---------- */
     @keyframes gentle-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
@@ -256,47 +296,6 @@ st.markdown("""
     }
     .scroll-cue:hover { background: linear-gradient(135deg, var(--teal), var(--ocean)); color: #fff !important; box-shadow: 0 12px 28px rgba(20,168,155,.35); }
     .scroll-cue:active { transform: scale(.94); }
-
-    /* ---------- RIPPLE (click effect) ---------- */
-    [data-baseweb="tab"] { position: relative; overflow: hidden; }
-    .aerivo-ripple {
-        position: absolute; border-radius: 50%; pointer-events: none;
-        background: rgba(255,255,255,0.65); transform: scale(0);
-        animation: aerivo-ripple .6s ease-out forwards;
-    }
-    .stButton > button:not([kind="primary"]) .aerivo-ripple,
-    [data-baseweb="tab"]:not([aria-selected="true"]) .aerivo-ripple { background: rgba(20,168,155,0.35); }
-    @keyframes aerivo-ripple { to { transform: scale(4); opacity: 0; } }
-
-    /* ---------- IMAGE LIGHTBOX ---------- */
-    [data-testid="stImage"] img { cursor: zoom-in; }
-    .aerivo-lightbox {
-        position: fixed; inset: 0; z-index: 999999; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; gap: 14px; padding: 4vh 4vw;
-        background: rgba(8, 28, 52, 0.72);
-        backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
-        animation: lb-fade .25s ease-out both;
-    }
-    .aerivo-lightbox img {
-        max-width: 92vw; max-height: 82vh; object-fit: contain; border-radius: 20px; cursor: default;
-        border: 1px solid rgba(255,255,255,0.45); box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-        animation: lb-pop .35s cubic-bezier(.22,.8,.24,1) both;
-    }
-    .aerivo-lightbox .lb-caption { color: #fff; font-weight: 700; text-align: center; font-family: 'Manrope','Noto Sans Arabic',sans-serif; }
-    .aerivo-lightbox .lb-close {
-        position: absolute; top: 22px; right: 22px; width: 52px; height: 52px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
-        background: rgba(255,255,255,0.9); color: #0B2A4A; border: 1px solid rgba(255,255,255,0.9);
-        box-shadow: 0 10px 28px rgba(0,0,0,0.35);
-        transition: transform .25s cubic-bezier(.22,.8,.24,1), background .25s, color .25s;
-    }
-    .aerivo-lightbox .lb-close:hover { background: #14A89B; color: #fff; transform: rotate(90deg) scale(1.08); }
-    .aerivo-lightbox .lb-close:active { transform: rotate(90deg) scale(0.9); }
-    .aerivo-lightbox .lb-close:focus-visible { outline: 3px solid #7FD8CC; outline-offset: 3px; }
-    @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes lb-pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
-    /* hide the zero-height helper iframe that carries the script */
-    [data-testid="stElementContainer"]:has(iframe[height="0"]) { height: 0; margin: 0 !important; overflow: hidden; }
 
     /* Hero entrance (the single orchestrated moment) */
     @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
@@ -395,6 +394,29 @@ def render_navbar():
                 st.info("Your cart is empty. Add products to proceed.")
 
 # --- REUSABLE UI BLOCKS ---
+def render_zoom_image(path, caption=""):
+    # Click the picture -> it opens full-screen (CSS :target). The X button, the dark
+    # backdrop, or any click outside the image closes it again. No JavaScript needed.
+    data = get_base64_of_bin_file(path)
+    if not data:
+        return False
+    if not hasattr(render_zoom_image, "_n"):
+        render_zoom_image._n = 0
+    render_zoom_image._n += 1
+    zid = f"zi-{render_zoom_image._n}"
+    cap = f"<figcaption class='zoom-cap'>{html.escape(caption)}</figcaption>" if caption else ""
+    st.markdown(
+        f"<figure id='{zid}' class='zoom-item'>"
+        f"<a class='zoom-open' href='#{zid}' aria-label='Enlarge image'></a>"
+        f"<img src='data:image/jpeg;base64,{data}' alt='{html.escape(caption)}'>"
+        f"<span class='zoom-badge'>⤢</span>{cap}"
+        f"<a class='zoom-backdrop' href='#_' aria-label='Close image'></a>"
+        f"<a class='zoom-close' href='#_' aria-label='Close image' title='Close'>✕</a>"
+        f"</figure>",
+        unsafe_allow_html=True,
+    )
+    return True
+
 def render_scroll_cue(text):
     # Clickable link that scrolls to the #gallery-section ID
     st.markdown(f"""
@@ -414,35 +436,27 @@ def render_album_gallery():
     with tab1:
         c1, c2 = st.columns(2)
         with c1:
-            try: st.image("Aerivo (8).png", caption="ICU Clinical Setting", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (8).png", "ICU Clinical Setting")
         with c2:
-            try: st.image("Aerivo (9).png", caption="Operating Room Configuration", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (9).png", "Operating Room Configuration")
 
     with tab2:
         c1, c2, c3 = st.columns(3)
         with c1:
-            try: st.image("Aerivo (10).png", caption="Ambulance Installation", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (10).png", "Ambulance Installation")
         with c2:
-            try: st.image("Aerivo (11).png", caption="Helicopter Emergency Services", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (11).png", "Helicopter Emergency Services")
         with c3:
-            try: st.image("Aerivo (2).png", caption="Field & Disaster Care", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (2).png", "Field & Disaster Care")
 
     with tab3:
         c1, c2, c3 = st.columns(3)
         with c1:
-            try: st.image("Aerivo (3).png", caption="Front Control Panel & UI", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (3).png", "Front Control Panel & UI")
         with c2:
-            try: st.image("Aerivo (4).png", caption="Rear View & Connectivity Ports", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (4).png", "Rear View & Connectivity Ports")
         with c3:
-            try: st.image("Aerivo (5).png", caption="Accessories & Travel Kit", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (5).png", "Accessories & Travel Kit")
 
 def render_tech_specs_button(label="📄 Tech Specs"):
     if pdf_data:
@@ -451,9 +465,7 @@ def render_tech_specs_button(label="📄 Tech Specs"):
         st.button(f"{label} (File Missing)", disabled=True, use_container_width=True)
 
 def render_main_product_image():
-    try:
-        st.image("Aerivo (6).png", use_container_width=True)
-    except:
+    if not render_zoom_image("Aerivo (6).png", "Aerivo M1"):
         st.info("Product Image Loading...")
 
 # --- REGIONAL PAGES ---
@@ -632,77 +644,3 @@ else:
     if st.session_state.language == 'EN': page_english_global()
     elif st.session_state.language == 'DE': page_german()
     elif st.session_state.language == 'AR': page_arabic()
-
-# --- CLIENT-SIDE EFFECTS: click ripple + image lightbox (with close button) ---
-# Streamlit strips <script> from markdown, so a zero-height component installs
-# event listeners once on the parent page; they survive Streamlit reruns.
-components.html("""
-<script>
-(function () {
-  const doc = window.parent.document;
-  if (window.parent.__aerivoFx) return;
-  window.parent.__aerivoFx = true;
-
-  // 1) Ripple on buttons and tabs
-  doc.addEventListener('pointerdown', function (e) {
-    const el = e.target.closest('.stButton button, .stDownloadButton button, [data-baseweb="tab"]');
-    if (!el || el.disabled) return;
-    const r = el.getBoundingClientRect();
-    const size = Math.max(r.width, r.height);
-    const dot = doc.createElement('span');
-    dot.className = 'aerivo-ripple';
-    dot.style.width = dot.style.height = size + 'px';
-    dot.style.left = (e.clientX - r.left - size / 2) + 'px';
-    dot.style.top = (e.clientY - r.top - size / 2) + 'px';
-    el.appendChild(dot);
-    setTimeout(function () { dot.remove(); }, 700);
-  }, true);
-
-  // 2) Lightbox for st.image pictures
-  function closeBox() {
-    const box = doc.querySelector('.aerivo-lightbox');
-    if (box) box.remove();
-    doc.body.style.overflow = '';
-  }
-  function openBox(img) {
-    closeBox();
-    const cap = img.closest('[data-testid="stImage"]');
-    const capEl = cap ? cap.querySelector('[data-testid="stImageCaption"]') : null;
-    const box = doc.createElement('div');
-    box.className = 'aerivo-lightbox';
-    box.setAttribute('role', 'dialog');
-    box.setAttribute('aria-modal', 'true');
-
-    const btn = doc.createElement('button');
-    btn.className = 'lb-close';
-    btn.setAttribute('aria-label', 'Close image');
-    btn.title = 'Close (Esc)';
-    btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>';
-    btn.addEventListener('click', closeBox);
-
-    const big = doc.createElement('img');
-    big.src = img.currentSrc || img.src;
-    big.alt = img.alt || '';
-    big.addEventListener('click', function (ev) { ev.stopPropagation(); });
-
-    box.appendChild(btn);
-    box.appendChild(big);
-    if (capEl && capEl.textContent.trim()) {
-      const c = doc.createElement('div');
-      c.className = 'lb-caption';
-      c.textContent = capEl.textContent.trim();
-      box.appendChild(c);
-    }
-    box.addEventListener('click', closeBox);   // click on the dark backdrop also closes
-    doc.body.appendChild(box);
-    doc.body.style.overflow = 'hidden';
-    btn.focus();
-  }
-  doc.addEventListener('click', function (e) {
-    const img = e.target.closest('[data-testid="stImage"] img');
-    if (img && !doc.querySelector('.aerivo-lightbox')) openBox(img);
-  });
-  doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeBox(); });
-})();
-</script>
-""", height=0)
