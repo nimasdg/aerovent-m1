@@ -1,183 +1,233 @@
 import streamlit as st
-import hashlib
 
-# 1. Configuration & Theming (White, Navy, Turquoise, Blue)
-st.set_page_config(page_title="AeroVent M1 Medical", layout="wide", initial_sidebar_state="collapsed")
+# --- CONFIGURATION & THEMING ---
+st.set_page_config(page_title="Aerivo Medical | Portable Ventilation", layout="wide", initial_sidebar_state="collapsed")
 
+# Injecting Custom CSS for a professional, medical-grade UI (No Persian)
 st.markdown("""
     <style>
-    .stApp { background-color: #FFFFFF; }
-    h1, h2, h3 { color: #000080; font-family: 'Arial', sans-serif; } /* Navy Blue */
-    .stButton>button { background-color: #40E0D0; color: #000080; font-weight: bold; border-radius: 8px; border: none; padding: 10px 24px; } /* Turquoise */
-    .stButton>button:hover { background-color: #0000FF; color: white; } /* Pure Blue */
-    .product-price { font-size: 24px; color: #0000FF; font-weight: bold; }
-    .rtl-text { direction: rtl; text-align: right; font-family: 'Tahoma', sans-serif; }
+    .stApp { background-color: #FFFFFF; color: #1F3B63; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    h1, h2, h3, h4 { color: #1F3B63; font-weight: 700; }
+    .hero-subtitle { font-size: 1.5rem; color: #4F86C6; margin-bottom: 2rem; }
+    .stButton>button { background-color: #5BB3A8; color: #FFFFFF; font-weight: bold; border-radius: 6px; border: none; padding: 0.75rem 2rem; transition: all 0.3s ease; }
+    .stButton>button:hover { background-color: #1F3B63; color: #FFFFFF; }
+    .price-tag { font-size: 2rem; color: #4F86C6; font-weight: bold; margin: 1rem 0; }
+    .cert-badge { display: inline-block; background-color: #DCE9F7; color: #1F3B63; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; margin-right: 1rem; font-size: 0.9rem;}
+    .rtl-text { direction: rtl; text-align: right; font-family: 'Arial', sans-serif; }
+    .feature-box { border-left: 4px solid #5BB3A8; padding-left: 1rem; margin-bottom: 1.5rem; }
+    .rtl-feature-box { border-right: 4px solid #5BB3A8; padding-right: 1rem; margin-bottom: 1.5rem; direction: rtl; text-align: right; }
+    hr { border-top: 1px solid #DCE9F7; }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. Session State Initialization
+# --- SESSION STATE ---
 if 'language' not in st.session_state:
     st.session_state.language = None
 if 'cart' not in st.session_state:
     st.session_state.cart = []
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-if 'current_page' not in st.session_state:
-    st.session_state.current_page = 'home'
 
-# --- SECURITY & AUTHENTICATION MODULE ---
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-# Mock Database for Users (In a real scenario, connects to SQL Server)
-USER_DB = {"admin": hash_password("admin123"), "user1": hash_password("pass123")}
-
-def login_page():
-    st.subheader("User Login / Admin Panel")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if username in USER_DB and USER_DB[username] == hash_password(password):
-            st.session_state.logged_in = True
-            st.success("Logged in successfully!")
-            st.rerun()
-        else:
-            st.error("Invalid credentials. Security logged.")
-
-def cart_widget():
-    st.sidebar.markdown(f"### 🛒 Cart ({len(st.session_state.cart)} items)")
-    if st.session_state.cart:
-        st.sidebar.write("AeroVent M1 Portable Ventilator")
-        st.sidebar.markdown("<p class='product-price'>$15,500.00</p>", unsafe_allow_html=True)
-        if st.sidebar.button("Checkout"):
-            if st.session_state.logged_in:
-                st.sidebar.success("Proceeding to secure payment gateway...")
-            else:
-                st.sidebar.warning("Please login to checkout.")
-    
-    if not st.session_state.logged_in:
-        st.sidebar.markdown("---")
-        if st.sidebar.button("Login / Register"):
-            st.session_state.current_page = 'login'
-            st.rerun()
-
-# --- CULTURAL PAGES BASED ON HOFSTEDE & HALL ---
-
-def english_page():
-    st.title("AeroVent M1 Portable Ventilator")
-    st.image("https://via.placeholder.com/800x400.png?text=AeroVent+M1+Image", use_container_width=True) # جایگزین با عکس ادیت شده همیلتون
-    
-    col1, col2 = st.columns([2, 1])
+# --- COMPONENTS ---
+def render_navbar():
+    col1, col2, col3 = st.columns([1, 4, 1])
     with col1:
-        st.markdown("""
-        ### Intelligent Ventilation Anywhere
-        The AeroVent M1 provides high-end ventilation performance in a compact, rugged design. 
-        Suitable for all patient groups from neonates to adults.
-        - **Battery Life:** 9 hours hot-swappable
-        - **Modes:** NIV, CPAP, ASV
-        - **Weight:** 6.5 kg
-        """)
-    with col2:
-        st.markdown("<p class='product-price'>Price: $15,500.00</p>", unsafe_allow_html=True)
-        if st.button("Add to Cart", key="eng_add"):
-            st.session_state.cart.append("AeroVent M1")
-            st.success("Added to cart!")
+        st.markdown("<h3 style='color: #4F86C6;'>⚕️ Aerivo Medical</h3>", unsafe_allow_html=True)
+    with col3:
+        if st.button("🌐 Change Region"):
+            st.session_state.language = None
+            st.rerun()
+    st.markdown("<hr>", unsafe_allow_html=True)
 
-def german_page():
-    # Low-Context, High Uncertainty Avoidance
-    st.title("AeroVent M1: Präzision und Sicherheit")
-    st.info("Zertifiziert nach EU MDR | ISO 13485:2016 konform | DSGVO-konforme Datenverarbeitung")
-    
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.markdown("""
-        ### Technische Spezifikationen & Zuverlässigkeit
-        Entwickelt für maximale Ausfallsicherheit im klinischen und präklinischen Einsatz.
-        
-        * **MTBF (Mean Time Between Failures):** > 50,000 Stunden
-        * **Klinische Validierung:** Getestet in über 12 unabhängigen Studien in der DACH-Region.
-        * **Datenschutz:** Integrierte Ende-zu-Ende-Verschlüsselung für Patientendaten.
-        """)
-        
-        with st.expander("📄 Technisches Datenblatt herunterladen (PDF)"):
-            st.write("Detaillierte Spezifikationen, Wartungszyklen und OEE-Metriken.")
-            st.button("Download PDF")
-            
-    with col2:
-        st.markdown("<p class='product-price'>Preis: 14.200 €</p>", unsafe_allow_html=True)
-        if st.button("In den Warenkorb", key="ger_add"):
-            st.session_state.cart.append("AeroVent M1")
-            st.success("Zum Warenkorb hinzugefügt!")
+def render_product_image():
+    # Utilizing the exact image provided by the user
+    try:
+        st.image("photo_6023697676118986405_y.jpg", use_container_width=True)
+    except:
+        st.info("Product image loading... (Ensure 'photo_6023697676118986405_y.jpg' is in the repository)")
 
-def arabic_page():
-    # High-Context, High Power Distance (Relationships, Authority, Visuals)
-    st.markdown("<div class='rtl-text'>", unsafe_allow_html=True)
-    st.title("أيروڤينت M1: شريكك الموثوق في العناية المركزة")
+# --- REGIONAL PAGES ---
+
+def page_english_global():
+    render_navbar()
     
-    st.error("مُعتمد رسمياً من قبل وزارة الصحة العراقية (MOH) ومطابق لمواصفات كيماديا (Kimadia)")
-    
-    st.image("https://via.placeholder.com/800x300.png?text=Doctors+Using+AeroVent", use_container_width=True)
-    
-    col1, col2 = st.columns([1, 2])
-    with col2:
+    # HERO SECTION
+    col_text, col_img = st.columns([1, 1], gap="large")
+    with col_text:
+        st.markdown("<h1>Aerivo M1 Portable Ventilator</h1>", unsafe_allow_html=True)
+        st.markdown("<div class='hero-subtitle'>Intelligent Ventilation, Anywhere You Need It.</div>", unsafe_allow_html=True)
         st.markdown("""
-        <div class='rtl-text'>
-        <h3>دعم شامل وتدريب مستمر</h3>
-        نحن لا نبيع جهازاً فقط، بل نبني شراكة طويلة الأمد مع مؤسستكم الطبية.
-        <ul>
-            <li><b>الصيانة والضمان:</b> فريق صيانة متواجد في بغداد وأربيل لضمان عدم توقف الجهاز.</li>
-            <li><b>التدريب:</b> تدريب حضوري شامل للكوادر الطبية والتمريضية.</li>
-        </ul>
-        <i>"لقد أحدث جهاز أيروڤينت نقلة نوعية في قسم الطوارئ لدينا." - د. أحمد، مدير مستشفى الطوارئ</i>
+        <div class='feature-box'>
+            <b>Uncompromising Performance</b><br>
+            Delivering ICU-level ventilation in a compact, ruggedized transport housing. Suitable for neonates to adults.
+        </div>
+        <div class='feature-box'>
+            <b>Continuous Operation</b><br>
+            Up to 9 hours of battery life with hot-swappable dual battery technology.
         </div>
         """, unsafe_allow_html=True)
-    with col1:
-        st.markdown("<p class='product-price'>السعر: $15,500.00</p>", unsafe_allow_html=True)
-        if st.button("إضافة إلى السلة", key="ar_add"):
-            st.session_state.cart.append("AeroVent M1")
-            st.success("تمت الإضافة!")
-    st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.markdown("<div class='price-tag'>$15,500.00 USD</div>", unsafe_allow_html=True)
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("Add to Cart", use_container_width=True):
+                st.session_state.cart.append("Aerivo M1")
+                st.success("Added to secure cart.")
+        with col_btn2:
+            st.button("View Technical Specs", use_container_width=True)
+            
+    with col_img:
+        render_product_image()
+        
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    
+    # SPECS SECTION (Scrollable content)
+    st.markdown("<h3>Technical Specifications</h3>", unsafe_allow_html=True)
+    spec_col1, spec_col2 = st.columns(2)
+    with spec_col1:
+        st.markdown("""
+        * **Patient Types:** Adult, Pediatric, Neonatal (with optional upgrade)
+        * **Ventilation Modes:** ASV, (S)CMV, SIMV, PCV+, PSIMV+, SPONT, APRV, NIV
+        * **Weight:** 6.5 kg (14.3 lbs)
+        """)
+    with spec_col2:
+        st.markdown("""
+        * **Dimensions:** 280 x 210 x 310 mm
+        * **Display:** 8.4 inch touchscreen
+        * **Interfaces:** USB, Ethernet, RS-232
+        """)
 
-# --- ROUTING LOGIC ---
-if st.session_state.current_page == 'login':
-    login_page()
-    if st.button("Back to Store"):
-        st.session_state.current_page = 'home'
-        st.rerun()
+def page_german():
+    render_navbar()
+    
+    # HERO SECTION (Low Context, High Uncertainty Avoidance Focus)
+    col_text, col_img = st.columns([1, 1], gap="large")
+    with col_text:
+        st.markdown("<h1>Aerivo M1: Präzision und Sicherheit</h1>", unsafe_allow_html=True)
+        st.markdown("<div class='hero-subtitle'>Mobiles Beatmungssystem für die Intensivmedizin</div>", unsafe_allow_html=True)
+        
+        # Highlighting Certifications early for German Market
+        st.markdown("""
+        <div style='margin-bottom: 1.5rem;'>
+            <span class='cert-badge'>🇪🇺 CE Zertifiziert</span>
+            <span class='cert-badge'>📋 EU MDR Konform</span>
+            <span class='cert-badge'>⚙️ ISO 13485:2016</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class='feature-box'>
+            <b>Zuverlässigkeit im Einsatz (MTBF > 50.000h)</b><br>
+            Entwickelt für maximale Ausfallsicherheit im klinischen und präklinischen Einsatz. Getestet durch unabhängige benannte Stellen (Notified Bodies).
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<div class='price-tag'>14.200 €</div>", unsafe_allow_html=True)
+        
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            st.button("Offizielles Angebot anfordern", use_container_width=True)
+        with col_btn2:
+            st.button("📄 Datenblatt (PDF)", use_container_width=True)
+            
+    with col_img:
+        render_product_image()
+
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    
+    # STRUCTURAL DATA SECTION
+    st.markdown("<h3>Klinische Spezifikationen & Rahmenverträge</h3>", unsafe_allow_html=True)
+    st.info("Zugelassen für die Beschaffung über Prospitalia, Sana und GDEKK Einkaufsverbünde. Vollständige Integration in DRG-Abrechnungssysteme.")
+    
+    tab1, tab2 = st.tabs(["Technische Daten", "Qualitätsmanagement"])
+    with tab1:
+        st.markdown("""
+        * **Atemzugvolumen:** 20 ml - 2000 ml
+        * **Akkulaufzeit:** 9 Stunden (Hot-Swap fähig)
+        * **Schutzklasse:** IP24 (Spritzwassergeschützt)
+        """)
+    with tab2:
+        st.markdown("""
+        * Datenspeicherung gemäß **DSGVO** Richtlinien.
+        * Erfüllt **ISO 80601-2-12:2020** (Intensivpflege) und **ISO 80601-2-84:2020** (Notfall/Transport).
+        """)
+
+def page_arabic():
+    render_navbar()
+    
+    # HERO SECTION (High Context, Relationship Focus, RTL)
+    st.markdown("<div class='rtl-text'>", unsafe_allow_html=True)
+    
+    col_img, col_text = st.columns([1, 1], gap="large")
+    with col_text:
+        st.markdown("<h1 style='direction: rtl; text-align: right;'>أيريفو M1: شريكك الموثوق في العناية المركزة</h1>", unsafe_allow_html=True)
+        st.markdown("<div class='hero-subtitle' style='direction: rtl; text-align: right;'>تكنولوجيا التنفس الصناعي المتقدمة، بين يديك.</div>", unsafe_allow_html=True)
+        
+        # Highlighting Local Authority & Trust
+        st.success("مُعتمد رسمياً ومسجل لدى وزارة الصحة العراقية (MOH) ومطابق لمواصفات الشركة العامة لتسويق الأدوية والمستلزمات الطبية (KIMADIA).")
+        
+        st.markdown("""
+        <div class='rtl-feature-box'>
+            <b>دعم شامل وتدريب مستمر</b><br>
+            نحن لا نبيع جهازاً فقط، بل نبني شراكة طويلة الأمد. نوفر تدريباً حضورياً شاملاً للكوادر الطبية لضمان الاستخدام الأمثل.
+        </div>
+        <div class='rtl-feature-box'>
+            <b>صيانة محلية وقطع غيار فورية</b><br>
+            فريق المهندسين المعتمدين متواجدون محلياً لضمان عدم توقف الجهاز عن العمل في الأوقات الحرجة.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<div class='price-tag' style='direction: rtl; text-align: right;'>$15,500.00 USD</div>", unsafe_allow_html=True)
+        
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn2:
+            st.button("تحدث مع خبير المبيعات (WhatsApp) 💬", use_container_width=True)
+        with col_btn1:
+            st.button("طلب عرض سعر للمناقصات", use_container_width=True)
+            
+    with col_img:
+        render_product_image()
+        
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    
+    # RELATIONSHIP & MEDIA SECTION
+    st.markdown("<h3 style='direction: rtl; text-align: right;'>الوكيل المحلي والضمان</h3>", unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class='rtl-text'>
+    الجهاز متوفر من خلال وكلائنا المعتمدين مع توفير كافة الوثائق المطلوبة للمناقصات الحكومية:
+    * شهادة المنشأ وشهادة البيع الحر (CFS).
+    * شهادة الجودة ISO 9001.
+    * ضمان استبدال القطع الاستهلاكية (فلاتر بكتيرية، أنابيب التنفس) فورياً.
+    
+    <i>"جهاز أيريفو مصمم ليتحمل ظروف النقل الصعبة ويعمل بكفاءة داخل سيارات الإسعاف وأقسام الطوارئ."</i>
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- MAIN ROUTER ---
+if st.session_state.language is None:
+    # Gateway Page
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #1F3B63;'>Welcome to Aerivo Medical</h1>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #4F86C6; margin-bottom: 3rem;'>Please select your region to continue</h4>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🌍 Global (English)", use_container_width=True):
+            st.session_state.language = 'EN'
+            st.rerun()
+    with col2:
+        if st.button("🇩🇪 Deutschland (Deutsch)", use_container_width=True):
+            st.session_state.language = 'DE'
+            st.rerun()
+    with col3:
+        if st.button("🇮🇶 العراق (العربية)", use_container_width=True):
+            st.session_state.language = 'AR'
+            st.rerun()
 else:
-    if st.session_state.language is None:
-        # Language Selection Gateway
-        st.markdown("<h1 style='text-align: center;'>Select Your Region / Language</h1>", unsafe_allow_html=True)
-        st.write("")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("Global (English)", use_container_width=True):
-                st.session_state.language = 'EN'
-                st.rerun()
-        with col2:
-            if st.button("Deutschland (Deutsch)", use_container_width=True):
-                st.session_state.language = 'DE'
-                st.rerun()
-        with col3:
-            if st.button("العراق (العربية)", use_container_width=True):
-                st.session_state.language = 'AR'
-                st.rerun()
-    else:
-        # Top Navigation
-        colA, colB = st.columns([4, 1])
-        with colA:
-            if st.button("🌍 Change Language / تغییر زبان"):
-                st.session_state.language = None
-                st.rerun()
-        
-        cart_widget()
-        
-        st.markdown("---")
-        
-        # Render Page based on selection
-        if st.session_state.language == 'EN':
-            english_page()
-        elif st.session_state.language == 'DE':
-            german_page()
-        elif st.session_state.language == 'AR':
-            arabic_page()
+    if st.session_state.language == 'EN':
+        page_english_global()
+    elif st.session_state.language == 'DE':
+        page_german()
+    elif st.session_state.language == 'AR':
+        page_arabic()
