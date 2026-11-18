@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import base64
 import os
 
@@ -38,10 +39,6 @@ if 'show_account' not in st.session_state:
     st.session_state.show_account = False
 
 # --- CORE CSS (APPLIED TO ALL PAGES) ---
-# Palette (one family, so everything harmonises):
-#   Navy   #0B2A4A  text / headings        Ocean  #1B6FB5  links / secondary accent
-#   Teal   #14A89B  primary action         Mint   #7FD8CC  highlights
-#   Ice    #EAF4FB  page tint              Glass  rgba(255,255,255,.55) surfaces
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
@@ -92,7 +89,6 @@ st.markdown("""
     .hero-subtitle { font-size: 1.25rem; color: var(--ocean); margin: .2rem 0 1.6rem; line-height: 1.55; font-weight: 500; }
 
     /* ---------- BUTTONS ---------- */
-    /* Secondary (default): glass pill used for navbar + region + cart actions */
     .stButton > button, .stDownloadButton > button {
         position: relative; overflow: hidden;
         background: var(--glass-strong); color: var(--navy);
@@ -107,7 +103,6 @@ st.markdown("""
         background: #FFFFFF; color: var(--teal-dark); border-color: var(--mint);
         transform: translateY(-3px); box-shadow: 0 12px 28px rgba(20,168,155,0.22);
     }
-    /* Primary (e.g. Add to Cart): teal gradient */
     .stButton > button[kind="primary"] {
         background: linear-gradient(135deg, var(--teal) 0%, var(--ocean) 100%);
         color: #FFFFFF; border: 1px solid rgba(255,255,255,.35);
@@ -117,7 +112,6 @@ st.markdown("""
         background: linear-gradient(135deg, var(--teal-dark) 0%, var(--navy) 100%);
         color: #FFFFFF; box-shadow: 0 16px 34px rgba(11,42,74,0.35);
     }
-    /* Shine sweep on hover */
     .stButton > button::before, .stDownloadButton > button::before {
         content: ""; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
         background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
@@ -125,7 +119,6 @@ st.markdown("""
     }
     .stButton > button:hover::before, .stDownloadButton > button:hover::before { left: 130%; }
 
-    /* CLICK EFFECT: press-in + expanding ring on the clicked element */
     @keyframes click-ring {
         0%   { box-shadow: 0 0 0 0 rgba(20,168,155,0.55); }
         100% { box-shadow: 0 0 0 16px rgba(20,168,155,0); }
@@ -235,51 +228,17 @@ st.markdown("""
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ---------- IMAGES (BULLETPROOF FULLSCREEN OVERRIDE) ---------- */
-    [data-testid="stImage"] { 
-        border-radius: 22px; 
-        overflow: hidden; 
-        box-shadow: var(--shadow-md); 
-        transition: transform .4s var(--ease), box-shadow .4s var(--ease); 
-        position: relative !important; 
-        display: block !important;
-    }
-    [data-testid="stImage"] img { 
-        border-radius: 22px; 
-        transition: transform .6s var(--ease); 
-    }
-    [data-testid="stImage"]:hover { 
-        transform: translateY(-4px); 
-        box-shadow: 0 22px 50px rgba(11,42,74,.2); 
-    }
-    [data-testid="stImage"]:hover img { 
-        transform: scale(1.04); 
-    }
-    [data-testid="stImageCaption"] { 
-        color: var(--ink-soft); font-weight: 600; text-align: center; 
-    }
+    /* ---------- IMAGES ---------- */
+    [data-testid="stImage"] { border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
+    /* نشانگر موس به شکل ذره بین در می‌آید تا حس زوم را القا کند */
+    [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); cursor: zoom-in !important; }
+    [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
+    [data-testid="stImage"]:hover img { transform: scale(1.04); }
+    [data-testid="stImage"]:active { transform: scale(.985); }
+    [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
 
-    /* Force the native fullscreen button to completely cover the image for zooming */
-    [data-testid="stImage"] button[title="View fullscreen"] {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        background-color: transparent !important;
-        color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        opacity: 1 !important; /* Forces the button to remain active to receive clicks */
-        visibility: visible !important;
-        display: block !important;
-        cursor: zoom-in !important; /* Visual indicator that it's clickable */
-        z-index: 9999 !important; /* Place it on top of all other image layers */
-    }
-    /* Hide the small magnifying/expand SVG icon */
-    [data-testid="stImage"] button[title="View fullscreen"] svg {
-        display: none !important;
-    }
+    /* مخفی کردن کامل دکمه پیش‌فرض و آزاردهنده استریم‌لیت */
+    [data-testid="StyledFullScreenButton"] { opacity: 0 !important; pointer-events: none !important; }
 
     /* ---------- SCROLL CUE ---------- */
     @keyframes gentle-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
@@ -294,7 +253,7 @@ st.markdown("""
     .scroll-cue:hover { background: linear-gradient(135deg, var(--teal), var(--ocean)); color: #fff !important; box-shadow: 0 12px 28px rgba(20,168,155,.35); }
     .scroll-cue:active { transform: scale(.94); }
 
-    /* Hero entrance (the single orchestrated moment) */
+    /* Hero entrance */
     @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
     h1 { animation: rise .7s var(--ease) both; }
     .hero-subtitle { animation: rise .7s .12s var(--ease) both; }
@@ -392,7 +351,6 @@ def render_navbar():
 
 # --- REUSABLE UI BLOCKS ---
 def render_scroll_cue(text):
-    # Clickable link that scrolls to the #gallery-section ID
     st.markdown(f"""
         <div class='scroll-container'>
             <a href="#gallery-section" class='scroll-cue'>{text} ↓</a>
@@ -400,7 +358,6 @@ def render_scroll_cue(text):
     """, unsafe_allow_html=True)
 
 def render_album_gallery():
-    # ID target for smooth scrolling
     st.markdown("<div id='gallery-section'></div>", unsafe_allow_html=True)
     st.markdown("<br><hr>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center; margin-bottom: 1rem;'>Aerivo M1 Environments & Details</h3>", unsafe_allow_html=True)
@@ -628,3 +585,26 @@ else:
     if st.session_state.language == 'EN': page_english_global()
     elif st.session_state.language == 'DE': page_german()
     elif st.session_state.language == 'AR': page_arabic()
+
+# --- JAVASCRIPT INJECTION FOR NATIVE IMAGE ZOOM ---
+# این کد مخفی تمامیکلیک‌های کاربر روی عکس‌ها را شناسایی کرده و هسته استریم‌لیت را مجبور می‌کند عکس را در حالت تمام‌صفحه باز کند
+components.html(
+    """
+    <script>
+    const parentDoc = window.parent.document;
+    parentDoc.addEventListener('click', function(e) {
+        if (e.target.tagName === 'IMG') {
+            const imgContainer = e.target.closest('[data-testid="stImage"]');
+            if (imgContainer) {
+                const expandBtn = imgContainer.querySelector('button[title="View fullscreen"]');
+                if (expandBtn) {
+                    expandBtn.click();
+                }
+            }
+        }
+    });
+    </script>
+    """,
+    height=0,
+    width=0,
+)
