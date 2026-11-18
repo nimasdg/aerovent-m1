@@ -3,20 +3,62 @@ import streamlit as st
 # --- CONFIGURATION & THEMING ---
 st.set_page_config(page_title="Aerivo Medical | Portable Ventilation", layout="wide", initial_sidebar_state="collapsed")
 
-# Injecting Custom CSS for a professional, medical-grade UI (No Persian)
+# Enhanced CSS for a premium medical-grade UI with light blue background
 st.markdown("""
     <style>
-    .stApp { background-color: #FFFFFF; color: #1F3B63; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    /* Gradient Light Blue Background & Visual Enhancements */
+    .stApp { 
+        background: linear-gradient(135deg, #F0F4F8 0%, #E1EBF5 100%); 
+        color: #1F3B63; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    }
+    
+    /* Gate Page Graphic & Box */
+    .gate-container {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 16px;
+        padding: 3rem;
+        box-shadow: 0 10px 30px rgba(31, 59, 99, 0.08);
+        border: 1px solid rgba(79, 134, 198, 0.2);
+        margin-top: 2rem;
+    }
+    
     h1, h2, h3, h4 { color: #1F3B63; font-weight: 700; }
     .hero-subtitle { font-size: 1.5rem; color: #4F86C6; margin-bottom: 2rem; }
-    .stButton>button { background-color: #5BB3A8; color: #FFFFFF; font-weight: bold; border-radius: 6px; border: none; padding: 0.75rem 2rem; transition: all 0.3s ease; }
-    .stButton>button:hover { background-color: #1F3B63; color: #FFFFFF; }
+    
+    /* Premium Buttons */
+    .stButton>button { 
+        background-color: #5BB3A8; 
+        color: #FFFFFF; 
+        font-weight: bold; 
+        border-radius: 8px; 
+        border: none; 
+        padding: 0.8rem 2rem; 
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(91, 179, 168, 0.2);
+    }
+    .stButton>button:hover { 
+        background-color: #1F3B63; 
+        color: #FFFFFF; 
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(31, 59, 99, 0.3);
+    }
+    
+    /* Gallery Styling */
+    .gallery-card {
+        background-color: #FFFFFF;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+    
     .price-tag { font-size: 2rem; color: #4F86C6; font-weight: bold; margin: 1rem 0; }
     .cert-badge { display: inline-block; background-color: #DCE9F7; color: #1F3B63; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; margin-right: 1rem; font-size: 0.9rem;}
     .rtl-text { direction: rtl; text-align: right; font-family: 'Arial', sans-serif; }
     .feature-box { border-left: 4px solid #5BB3A8; padding-left: 1rem; margin-bottom: 1.5rem; }
     .rtl-feature-box { border-right: 4px solid #5BB3A8; padding-right: 1rem; margin-bottom: 1.5rem; direction: rtl; text-align: right; }
-    hr { border-top: 1px solid #DCE9F7; }
+    hr { border-top: 1px solid rgba(79, 134, 198, 0.2); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -30,19 +72,29 @@ if 'cart' not in st.session_state:
 def render_navbar():
     col1, col2, col3 = st.columns([1, 4, 1])
     with col1:
-        st.markdown("<h3 style='color: #4F86C6;'>⚕️ Aerivo Medical</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color: #4F86C6; margin:0;'>⚕️ Aerivo Medical</h3>", unsafe_allow_html=True)
     with col3:
         if st.button("🌐 Change Region"):
             st.session_state.language = None
             st.rerun()
     st.markdown("<hr>", unsafe_allow_html=True)
 
-def render_product_image():
-    # Utilizing the exact image provided by the user
-    try:
-        st.image("photo_6023697676118986405_y.jpg", use_container_width=True)
-    except:
-        st.info("Product image loading... (Ensure 'photo_6023697676118986405_y.jpg' is in the repository)")
+# Function to render gallery section at the bottom of the page
+def render_multiscreen_gallery():
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>Aerivo M1 in Field & Clinical Environments</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #4F86C6; margin-bottom: 2rem;'>Explore how the Aerivo M1 adapts to various medical and rescue environments globally.</p>", unsafe_allow_html=True)
+    
+    # Grid for the 10 custom environment images
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("<div class='gallery-card'>", unsafe_allow_html=True)
+        st.image("image_7.png", caption="Aerivo M1 Multi-Environment Operations", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("<div class='gallery-card'>", unsafe_allow_html=True)
+        st.image("image_6.png", caption="The Portable Kit (Standard Package)", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- REGIONAL PAGES ---
 
@@ -75,11 +127,11 @@ def page_english_global():
             st.button("View Technical Specs", use_container_width=True)
             
     with col_img:
-        render_product_image()
+        st.image("image_6.png", use_container_width=True)
         
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
     
-    # SPECS SECTION (Scrollable content)
+    # SPECS SECTION
     st.markdown("<h3>Technical Specifications</h3>", unsafe_allow_html=True)
     spec_col1, spec_col2 = st.columns(2)
     with spec_col1:
@@ -94,17 +146,18 @@ def page_english_global():
         * **Display:** 8.4 inch touchscreen
         * **Interfaces:** USB, Ethernet, RS-232
         """)
+    
+    render_multiscreen_gallery()
 
 def page_german():
     render_navbar()
     
-    # HERO SECTION (Low Context, High Uncertainty Avoidance Focus)
+    # HERO SECTION
     col_text, col_img = st.columns([1, 1], gap="large")
     with col_text:
         st.markdown("<h1>Aerivo M1: Präzision und Sicherheit</h1>", unsafe_allow_html=True)
         st.markdown("<div class='hero-subtitle'>Mobiles Beatmungssystem für die Intensivmedizin</div>", unsafe_allow_html=True)
         
-        # Highlighting Certifications early for German Market
         st.markdown("""
         <div style='margin-bottom: 1.5rem;'>
             <span class='cert-badge'>🇪🇺 CE Zertifiziert</span>
@@ -129,7 +182,7 @@ def page_german():
             st.button("📄 Datenblatt (PDF)", use_container_width=True)
             
     with col_img:
-        render_product_image()
+        st.image("image_6.png", use_container_width=True)
 
     st.markdown("<br><hr><br>", unsafe_allow_html=True)
     
@@ -149,11 +202,13 @@ def page_german():
         * Datenspeicherung gemäß **DSGVO** Richtlinien.
         * Erfüllt **ISO 80601-2-12:2020** (Intensivpflege) und **ISO 80601-2-84:2020** (Notfall/Transport).
         """)
+        
+    render_multiscreen_gallery()
 
 def page_arabic():
     render_navbar()
     
-    # HERO SECTION (High Context, Relationship Focus, RTL)
+    # HERO SECTION
     st.markdown("<div class='rtl-text'>", unsafe_allow_html=True)
     
     col_img, col_text = st.columns([1, 1], gap="large")
@@ -161,73 +216,4 @@ def page_arabic():
         st.markdown("<h1 style='direction: rtl; text-align: right;'>أيريفو M1: شريكك الموثوق في العناية المركزة</h1>", unsafe_allow_html=True)
         st.markdown("<div class='hero-subtitle' style='direction: rtl; text-align: right;'>تكنولوجيا التنفس الصناعي المتقدمة، بين يديك.</div>", unsafe_allow_html=True)
         
-        # Highlighting Local Authority & Trust
-        st.success("مُعتمد رسمياً ومسجل لدى وزارة الصحة العراقية (MOH) ومطابق لمواصفات الشركة العامة لتسويق الأدوية والمستلزمات الطبية (KIMADIA).")
-        
-        st.markdown("""
-        <div class='rtl-feature-box'>
-            <b>دعم شامل وتدريب مستمر</b><br>
-            نحن لا نبيع جهازاً فقط، بل نبني شراكة طويلة الأمد. نوفر تدريباً حضورياً شاملاً للكوادر الطبية لضمان الاستخدام الأمثل.
-        </div>
-        <div class='rtl-feature-box'>
-            <b>صيانة محلية وقطع غيار فورية</b><br>
-            فريق المهندسين المعتمدين متواجدون محلياً لضمان عدم توقف الجهاز عن العمل في الأوقات الحرجة.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("<div class='price-tag' style='direction: rtl; text-align: right;'>$15,500.00 USD</div>", unsafe_allow_html=True)
-        
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn2:
-            st.button("تحدث مع خبير المبيعات (WhatsApp) 💬", use_container_width=True)
-        with col_btn1:
-            st.button("طلب عرض سعر للمناقصات", use_container_width=True)
-            
-    with col_img:
-        render_product_image()
-        
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    st.markdown("<br><hr><br>", unsafe_allow_html=True)
-    
-    # RELATIONSHIP & MEDIA SECTION
-    st.markdown("<h3 style='direction: rtl; text-align: right;'>الوكيل المحلي والضمان</h3>", unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class='rtl-text'>
-    الجهاز متوفر من خلال وكلائنا المعتمدين مع توفير كافة الوثائق المطلوبة للمناقصات الحكومية:
-    * شهادة المنشأ وشهادة البيع الحر (CFS).
-    * شهادة الجودة ISO 9001.
-    * ضمان استبدال القطع الاستهلاكية (فلاتر بكتيرية، أنابيب التنفس) فورياً.
-    
-    <i>"جهاز أيريفو مصمم ليتحمل ظروف النقل الصعبة ويعمل بكفاءة داخل سيارات الإسعاف وأقسام الطوارئ."</i>
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- MAIN ROUTER ---
-if st.session_state.language is None:
-    # Gateway Page
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    st.markdown("<h1 style='text-align: center; color: #1F3B63;'>Welcome to Aerivo Medical</h1>", unsafe_allow_html=True)
-    st.markdown("<h4 style='text-align: center; color: #4F86C6; margin-bottom: 3rem;'>Please select your region to continue</h4>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("🌍 Global (English)", use_container_width=True):
-            st.session_state.language = 'EN'
-            st.rerun()
-    with col2:
-        if st.button("🇩🇪 Deutschland (Deutsch)", use_container_width=True):
-            st.session_state.language = 'DE'
-            st.rerun()
-    with col3:
-        if st.button("🇮🇶 العراق (العربية)", use_container_width=True):
-            st.session_state.language = 'AR'
-            st.rerun()
-else:
-    if st.session_state.language == 'EN':
-        page_english_global()
-    elif st.session_state.language == 'DE':
-        page_german()
-    elif st.session_state.language == 'AR':
-        page_arabic()
+        st.
