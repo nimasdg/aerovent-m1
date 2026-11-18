@@ -216,4 +216,86 @@ def page_arabic():
         st.markdown("<h1 style='direction: rtl; text-align: right;'>أيريفو M1: شريكك الموثوق في العناية المركزة</h1>", unsafe_allow_html=True)
         st.markdown("<div class='hero-subtitle' style='direction: rtl; text-align: right;'>تكنولوجيا التنفس الصناعي المتقدمة، بين يديك.</div>", unsafe_allow_html=True)
         
-        st.
+        st.success("مُعتمد رسمياً ومسجل لدى وزارة الصحة العراقية (MOH) ومطابق لمواصفات الشركة العامة لتسويق الأدوية والمستلزمات الطبية (KIMADIA).")
+        
+        st.markdown("""
+        <div class='rtl-feature-box'>
+            <b>دعم شامل وتدريب مستمر</b><br>
+            نحن لا نبيع جهازاً فقط، بل نبني شراكة طويلة الأمد. نوفر تدريباً حضورياً شاملاً للكوادر الطبية لضمان الاستخدام الأمثل.
+        </div>
+        <div class='rtl-feature-box'>
+            <b>صيانة محلية وقطع غيار فورية</b><br>
+            فريق المهندسين المعتمدين متواجدون محلياً لضمان عدم توقف الجهاز عن العمل في الأوقات الحرجة.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<div class='price-tag' style='direction: rtl; text-align: right;'>$15,500.00 USD</div>", unsafe_allow_html=True)
+        
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn2:
+            st.button("تحدث مع خبير المبيعات (WhatsApp) 💬", use_container_width=True)
+        with col_btn1:
+            st.button("طلب عرض سعر للمناقصات", use_container_width=True)
+            
+    with col_img:
+        st.image("image_6.png", use_container_width=True)
+        
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.markdown("<br><hr><br>", unsafe_allow_html=True)
+    
+    # RELATIONSHIP & MEDIA SECTION
+    st.markdown("<h3 style='direction: rtl; text-align: right;'>الوكيل المحلي والضمان</h3>", unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class='rtl-text'>
+    الجهاز متوفر من خلال وكلائنا المعتمدين مع توفير كافة الوثائق المطلوبة للمناقصات الحكومية:
+    * شهادة المنشأ وشهادة البيع الحر (CFS).
+    * شهادة الجودة ISO 9001.
+    * ضمان استبدال القطع الاستهلاكية (فلاتر بكتيرية، أنابيب التنفس) فورياً.
+    
+    <i>"جهاز أيريفو مصمم ليتحمل ظروف النقل الصعبة ويعمل بكفاءة داخل سيارات الإسعاف وأقسام الطوارئ."</i>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    render_multiscreen_gallery()
+
+# --- MAIN ROUTER (Gateway Page with Premium Graphic Background) ---
+if st.session_state.language is None:
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    
+    # Modernized Gate Container
+    st.markdown("""
+        <div class='gate-container'>
+            <h1 style='text-align: center; color: #1F3B63; font-size: 2.8rem;'>⚕️ AERIVO MEDICAL</h1>
+            <p style='text-align: center; color: #4F86C6; font-size: 1.2rem; margin-top: -10px;'>GLOBAL LIFE SUPPORT SOLUTIONS</p>
+            <div style='text-align: center; font-size: 1.1rem; color: #1F3B63; max-width: 600px; margin: 1.5rem auto 2.5rem auto; line-height: 1.6;'>
+                Choose your region to access custom medical specifications, regulatory certifications, and dedicated procurement channels.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Placement of product image directly on Gateway
+    st.image("image_6.png", caption="The Aerivo M1 Portable Medical Ventilator", use_container_width=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🌍 Global Market (English)", use_container_width=True):
+            st.session_state.language = 'EN'
+            st.rerun()
+    with col2:
+        if st.button("🇩🇪 Deutschland (Deutsch)", use_container_width=True):
+            st.session_state.language = 'DE'
+            st.rerun()
+    with col3:
+        if st.button("🇮🇶 العراق (العربية)", use_container_width=True):
+            st.session_state.language = 'AR'
+            st.rerun()
+else:
+    if st.session_state.language == 'EN':
+        page_english_global()
+    elif st.session_state.language == 'DE':
+        page_german()
+    elif st.session_state.language == 'AR':
+        page_arabic()
