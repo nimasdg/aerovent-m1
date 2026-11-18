@@ -63,42 +63,42 @@ def render_album_gallery():
     with tab1:
         c1, c2 = st.columns(2)
         with c1:
-            try: st.image("Aerivo (8).jpg", caption="ICU Clinical Setting", use_container_width=True)
+            try: st.image("Aerivo (8).png", caption="ICU Clinical Setting", use_container_width=True)
             except: pass
         with c2:
-            try: st.image("Aerivo (9).jpg", caption="Operating Room Configuration", use_container_width=True)
+            try: st.image("Aerivo (9).png", caption="Operating Room Configuration", use_container_width=True)
             except: pass
             
     with tab2:
         c1, c2, c3 = st.columns(3)
         with c1:
-            try: st.image("Aerivo (10).jpg", caption="Ambulance Installation", use_container_width=True)
+            try: st.image("Aerivo (10).png", caption="Ambulance Installation", use_container_width=True)
             except: pass
         with c2:
-            try: st.image("Aerivo (11).jpg", caption="Helicopter Emergency Services", use_container_width=True)
+            try: st.image("Aerivo (11).png", caption="Helicopter Emergency Services", use_container_width=True)
             except: pass
         with c3:
-            try: st.image("Aerivo (2).jpg", caption="Field & Disaster Care", use_container_width=True)
+            try: st.image("Aerivo (2).png", caption="Field & Disaster Care", use_container_width=True)
             except: pass
             
     with tab3:
         c1, c2, c3 = st.columns(3)
         with c1:
-            try: st.image("Aerivo (3).jpg", caption="Front Control Panel & UI", use_container_width=True)
+            try: st.image("Aerivo (3).png", caption="Front Control Panel & UI", use_container_width=True)
             except: pass
         with c2:
-            try: st.image("Aerivo (4).jpg", caption="Rear View & Connectivity Ports", use_container_width=True)
+            try: st.image("Aerivo (4).png", caption="Rear View & Connectivity Ports", use_container_width=True)
             except: pass
         with c3:
-            try: st.image("Aerivo (5).jpg", caption="Accessories & Travel Kit", use_container_width=True)
+            try: st.image("Aerivo (5).png", caption="Accessories & Travel Kit", use_container_width=True)
             except: pass
 
 # --- REGIONAL PAGES ---
 def render_main_product_image():
     try:
-        st.image("Aerivo (6).jpg", use_container_width=True)
+        st.image("Aerivo (6).png", use_container_width=True)
     except:
-        st.info("Please upload 'Aerivo (6).jpg' to GitHub.")
+        st.info("Please upload 'Aerivo (6).png' to GitHub.")
 
 def page_english_global():
     render_navbar()
@@ -206,7 +206,7 @@ def page_arabic():
 # --- ROUTER & CONDITIONAL CSS ---
 if st.session_state.language is None:
     # 1. GENERATE BACKGROUND FOR GATEWAY
-    bg_base64 = get_base64_of_bin_file("Aerivo (7).jpg")
+    bg_base64 = get_base64_of_bin_file("Aerivo (7).png")
     
     # 2. INJECT FULL-SCREEN CSS
     st.markdown(f"""
