@@ -1,5 +1,7 @@
 import streamlit as st
 import base64
+import html
+import io
 import os
 import unicodedata
 
@@ -21,6 +23,70 @@ def get_base64_of_bin_file(bin_file):
             data = f.read()
         return base64.b64encode(data).decode()
     return ""
+
+# --- IMAGE HELPERS (PNG/JPG aware, resized + cached so the page stays light) ---
+_MIME = {".png": "image/png", ".png": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+
+def resolve_image_path(path):
+    """Return an existing file for `path`; also tries the same name with other image extensions."""
+    if os.path.exists(path):
+        return path
+    stem = os.path.splitext(path)[0]
+    for ext in (".png", ".png", ".jpeg", ".webp"):
+        if os.path.exists(stem + ext):
+            return stem + ext
+    return ""
+
+@st.cache_data(show_spinner=False)
+def _image_data_uri(real_path, mtime, max_w):
+    ext = os.path.splitext(real_path)[1].lower()
+    try:
+        from PIL import Image
+        with Image.open(real_path) as im:
+            im.load()
+            if im.width > max_w:
+                im = im.resize((max_w, round(im.height * max_w / im.width)), Image.LANCZOS)
+            has_alpha = im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
+            buf = io.BytesIO()
+            if has_alpha:
+                im.convert("RGBA").save(buf, "PNG", optimize=True)
+                mime = "image/png"
+            else:
+                im.convert("RGB").save(buf, "JPEG", quality=86, optimize=True, progressive=True)
+                mime = "image/jpeg"
+        return f"data:{mime};base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        with open(real_path, "rb") as f:
+            raw = f.read()
+        return f"data:{_MIME.get(ext, 'image/jpeg')};base64," + base64.b64encode(raw).decode()
+
+def get_image_data_uri(path, max_w=1600):
+    real = resolve_image_path(path)
+    if not real:
+        return ""
+    return _image_data_uri(real, os.path.getmtime(real), max_w)
+
+def render_zoom_image(path, caption=""):
+    """Click the picture -> it opens full-screen (pure CSS :target, no JavaScript).
+    Close with the X button, by clicking the dark backdrop, or any click outside the image."""
+    uri = get_image_data_uri(path)
+    if not uri:
+        return False
+    render_zoom_image._n = getattr(render_zoom_image, "_n", 0) + 1
+    zid = f"zi-{render_zoom_image._n}"
+    alt = html.escape(caption or "Aerivo M1", quote=True)
+    cap = f"<figcaption class='zoom-cap'>{html.escape(caption)}</figcaption>" if caption else ""
+    st.markdown(
+        f"<figure id='{zid}' class='zoom-item'>"
+        f"<a class='zoom-open' href='#{zid}' aria-label='Enlarge image'></a>"
+        f"<img src='{uri}' alt='{alt}'>"
+        f"<span class='zoom-badge'>⤢</span>{cap}"
+        f"<a class='zoom-backdrop' href='#_' aria-label='Close image'></a>"
+        f"<a class='zoom-close' href='#_' aria-label='Close image' title='Close'>✕</a>"
+        f"</figure>",
+        unsafe_allow_html=True,
+    )
+    return True
 
 @st.cache_data
 def get_pdf_bytes(filename):
@@ -312,16 +378,74 @@ st.markdown("""
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ---------- IMAGES ---------- */
-    [data-testid="stImage"] {
-        border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-md);
-        transition: transform .4s var(--ease), box-shadow .4s var(--ease);
-        position: relative !important; display: block !important;
+    /* ---------- IMAGES + CSS-ONLY LIGHTBOX ---------- */
+    .zoom-item { position: relative; margin: 0 0 1rem; }
+    .zoom-item img {
+        display: block; width: 100%; height: auto; border-radius: 22px; box-shadow: var(--shadow-md);
+        transition: transform .45s var(--ease), box-shadow .4s var(--ease);
     }
-    [data-testid="stImage"] img { border-radius: 22px; transition: transform .6s var(--ease); }
-    [data-testid="stImage"]:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(11,42,74,.2); }
-    [data-testid="stImage"]:hover img { transform: scale(1.04); }
-    [data-testid="stImageCaption"] { color: var(--ink-soft); font-weight: 600; text-align: center; }
+    .zoom-item .zoom-open { position: absolute; inset: 0; z-index: 2; border-radius: 22px; cursor: zoom-in; }
+    .zoom-item:hover img { transform: translateY(-4px) scale(1.015); box-shadow: 0 22px 50px rgba(11,42,74,.22); }
+    .zoom-item .zoom-open:active + img { transform: scale(.97); }
+    .zoom-badge {
+        position: absolute; top: 12px; right: 12px; z-index: 3; width: 34px; height: 34px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; pointer-events: none; font-size: 1rem;
+        background: var(--glass-strong); color: var(--navy); border: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px); box-shadow: var(--shadow-sm); opacity: 0; transform: scale(.8);
+        transition: opacity .25s var(--ease), transform .25s var(--ease);
+    }
+    .zoom-item:hover .zoom-badge { opacity: 1; transform: none; }
+    .zoom-cap { text-align: center; color: var(--ink-soft); font-weight: 600; font-size: .9rem; margin-top: .55rem; }
+    .zoom-backdrop, .zoom-close { display: none; }
+
+    /* Opened state: the same figure becomes a full-screen overlay (:target) */
+    .zoom-item:target {
+        position: fixed; inset: 0; z-index: 999999; margin: 0; padding: 4vh 4vw;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+        background: rgba(8, 28, 52, 0.78);
+        backdrop-filter: blur(14px) saturate(150%); -webkit-backdrop-filter: blur(14px) saturate(150%);
+        animation: lb-fade .25s ease-out both;
+    }
+    .zoom-item:target .zoom-open, .zoom-item:target .zoom-badge { display: none; }
+    .zoom-item:target .zoom-backdrop { display: block; position: absolute; inset: 0; z-index: 0; cursor: zoom-out; }
+    .zoom-item:target img {
+        position: relative; z-index: 1; width: auto; max-width: 92vw; max-height: 80vh; object-fit: contain;
+        transform: none !important; border: 1px solid rgba(255,255,255,0.45);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.5); animation: lb-pop .35s var(--ease) both;
+    }
+    .zoom-item:target .zoom-cap { position: relative; z-index: 1; color: #fff; margin: 0; font-size: 1rem; }
+    .zoom-item:target .zoom-close {
+        display: flex; position: fixed; top: 22px; right: 22px; z-index: 3; width: 54px; height: 54px;
+        border-radius: 50%; align-items: center; justify-content: center; text-decoration: none !important;
+        font-size: 1.6rem; font-weight: 800; line-height: 1; color: var(--navy) !important;
+        background: rgba(255,255,255,0.95); border: 1px solid #fff; box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+        transition: transform .25s var(--ease), background .25s var(--ease), color .25s var(--ease);
+    }
+    .zoom-item:target .zoom-close:hover { background: var(--teal); color: #fff !important; transform: rotate(90deg) scale(1.08); }
+    .zoom-item:target .zoom-close:active { transform: rotate(90deg) scale(.9); }
+    @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lb-pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; } }
+
+    /* ---------- EXPANDER (personalization) ---------- */
+    [data-testid="stExpander"] {
+        background: var(--glass) !important; border: 1px solid var(--glass-border) !important;
+        border-radius: 18px !important; box-shadow: var(--shadow-sm);
+        backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%);
+        margin-bottom: 1.2rem; overflow: hidden;
+    }
+    [data-testid="stExpander"] summary { font-weight: 700; color: var(--navy); transition: background .25s var(--ease); }
+    [data-testid="stExpander"] summary:hover { background: rgba(255,255,255,.6); }
+    [data-testid="stExpander"] summary:active { background: rgba(20,168,155,.12); }
+
+    /* ---------- CLICK FEEDBACK (restored) ---------- */
+    .feature-box:active, .rtl-feature-box:active, .glass-card:active { transform: translateY(-1px) scale(0.985); }
+    .cert-badge:active { transform: scale(.94); }
+    [data-baseweb="tab"]:active { transform: scale(.94); }
+    .scroll-cue:active, .wa-btn-inline:active, .wa-floating:active { transform: scale(.95); }
+    .stTextInput input, .stTextArea textarea { transition: box-shadow .25s var(--ease), border-color .25s var(--ease); }
+    .stTextInput input:focus, .stTextArea textarea:focus {
+        border-color: var(--teal) !important; box-shadow: 0 0 0 4px rgba(20,168,155,0.18) !important;
+    }
 
     /* ---------- SCROLL CUE ---------- */
     @keyframes gentle-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
@@ -342,6 +466,12 @@ st.markdown("""
     @media (max-width: 768px) {
         h1 { font-size: 2rem !important; }
         .price-tag { font-size: 1.7rem; }
+        .clinical-table { display: block; overflow-x: auto; }
+        .wa-floating { left: 12px; right: 12px; bottom: 12px; justify-content: center; }
+        .zoom-item:target .zoom-close { top: 14px; right: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        * { animation: none !important; transition: none !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -410,7 +540,7 @@ def render_navbar(lang="EN"):
         with st.container(border=True):
             st.markdown("### 🛒 Your Secure Procurement Cart")
             if len(st.session_state.cart) > 0:
-                total_usd = 0
+                totals = {}
                 for i, item in enumerate(st.session_state.cart):
                     c_item, c_del = st.columns([5, 1])
                     with c_item:
@@ -420,10 +550,11 @@ def render_navbar(lang="EN"):
                         if st.button("✕", key=f"del_cart_{i}"):
                             st.session_state.cart.pop(i)
                             st.rerun()
-                    total_usd += item["price"]
+                    totals[item["currency"]] = totals.get(item["currency"], 0) + item["price"]
                 st.markdown("<hr>", unsafe_allow_html=True)
-                curr_label = "EUR (€)" if lang == "DE" else "USD ($)"
-                st.markdown(f"**Estimated Total:** {total_usd:,.2f} {curr_label}")
+                labels = {"EUR": "EUR (€)", "USD": "USD ($)"}
+                for cur, amount in totals.items():
+                    st.markdown(f"**Estimated Total:** {amount:,.2f} {labels.get(cur, cur)}")
                 st.write("")
                 c1, c2 = st.columns(2)
                 with c1:
@@ -637,33 +768,25 @@ def render_album_gallery(lang="EN"):
     with tab1:
         c1, c2 = st.columns(2)
         with c1:
-            try: st.image("Aerivo (8).png", caption="ICU Clinical Setting", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (8).png", "ICU Clinical Setting")
         with c2:
-            try: st.image("Aerivo (9).png", caption="Operating Room Configuration", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (9).png", "Operating Room Configuration")
     with tab2:
         c1, c2, c3 = st.columns(3)
         with c1:
-            try: st.image("Aerivo (10).png", caption="Ambulance Installation", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (10).png", "Ambulance Installation")
         with c2:
-            try: st.image("Aerivo (11).png", caption="Helicopter Emergency Services", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (11).png", "Helicopter Emergency Services")
         with c3:
-            try: st.image("Aerivo (2).png", caption="Field & Disaster Care", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (2).png", "Field & Disaster Care")
     with tab3:
         c1, c2, c3 = st.columns(3)
         with c1:
-            try: st.image("Aerivo (3).png", caption="Front Control Panel & UI", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (3).png", "Front Control Panel & UI")
         with c2:
-            try: st.image("Aerivo (4).png", caption="Rear View & Connectivity Ports", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (4).png", "Rear View & Connectivity Ports")
         with c3:
-            try: st.image("Aerivo (5).png", caption="Accessories & Travel Kit", use_container_width=True)
-            except: pass
+            render_zoom_image("Aerivo (5).png", "Accessories & Travel Kit")
 
 def render_tech_specs_button(lang="EN", label="📄 Tech Specs", download_name=None):
     source_file = PDF_FILES.get(lang, PDF_FILES["EN"])
@@ -682,9 +805,7 @@ def render_tech_specs_button(lang="EN", label="📄 Tech Specs", download_name=N
         st.button(f"{label} (PDF Missing: {source_file})", disabled=True, use_container_width=True)
 
 def render_main_product_image():
-    try:
-        st.image("Aerivo (6).png", use_container_width=True)
-    except:
+    if not render_zoom_image("Aerivo (6).png", "Aerivo M1"):
         st.info("Product Image Loading...")
 
 # ==============================================================================
@@ -911,8 +1032,7 @@ def page_arabic():
     # --- ATTENTION (Local Support, Competitive Price, Ready for Transport) ---
     col_img, col_text = st.columns([1, 1.15], gap="large")
     with col_text:
-        st.markdown("<div style='direction: rtl; text-align: right;'>", unsafe_allow_html=True)
-        st.markdown("<div class='section-kicker'>دعم محلي في العراق • سعر تنافسي • جاهز للنقل</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-kicker' style='direction: rtl; text-align: right; display:block;'>دعم محلي في العراق • سعر تنافسي • جاهز للنقل</div>", unsafe_allow_html=True)
         st.markdown("<h1 style='direction: rtl; text-align: right;'>أيريفو M1: دعم محلي موثوق، سعر تنافسي وجاهز للنقل الفوري</h1>", unsafe_allow_html=True)
         st.markdown("<div class='hero-subtitle' style='direction: rtl; text-align: right;'>جهاز تنفس صناعي متنقل بوزن 6.5 كغم وتوربين داخلي — مصمم خصيصاً لظروف العمل في المستشفيات العراقية.</div>", unsafe_allow_html=True)
 
@@ -942,7 +1062,6 @@ def page_arabic():
             فريقنا الهندسي ومكتبنا العلمي المعتمد متواجدون في بغداد وأربيل لخدمة كوادركم الطبية على مدار الساعة.
         </div>
         """, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with col_img:
         render_main_product_image()
@@ -1107,14 +1226,14 @@ def page_arabic():
 # ROUTER & GATEWAY PAGE
 # ==============================================================================
 if st.session_state.language is None:
-    bg_base64 = get_base64_of_bin_file("Aerivo (7).png")
+    bg_uri = get_image_data_uri("Aerivo (7).png", 1920)
 
     st.markdown(f"""
         <style>
         .stApp {{
             background:
                 linear-gradient(160deg, rgba(11,42,74,0.55) 0%, rgba(20,168,155,0.25) 100%),
-                url("data:image/jpeg;base64,{bg_base64}") !important;
+                url("{bg_uri}") !important;
             background-size: cover !important;
             background-position: center !important;
             background-attachment: fixed !important;
