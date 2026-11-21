@@ -1,9 +1,17 @@
 import streamlit as st
 import base64
 import os
+import unicodedata
 
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Aerivo Medical | Portable Ventilation", layout="wide", initial_sidebar_state="collapsed")
+
+# --- REGIONAL DATASHEET MAPPING ---
+PDF_FILES = {
+    "EN": "Portable Medical Ventilator Datasheet.pdf",
+    "DE": "Technisches Datenblatt Beatmungsgerät.pdf",
+    "AR": "البطاقة الفنية لجهاز التنفس الاصطناعي المحمول.pdf",
+}
 
 # --- UTILITIES ---
 @st.cache_data
@@ -14,14 +22,18 @@ def get_base64_of_bin_file(bin_file):
         return base64.b64encode(data).decode()
     return ""
 
+@st.cache_data
 def get_pdf_bytes(filename):
     if os.path.exists(filename):
         with open(filename, "rb") as f:
             return f.read()
+    # Fallback with Unicode normalization (handles ä / Arabic filenames across Windows & Linux)
+    target_norm = unicodedata.normalize("NFC", filename)
+    for entry in os.listdir("."):
+        if unicodedata.normalize("NFC", entry) == target_norm:
+            with open(entry, "rb") as f:
+                return f.read()
     return b""
-
-# Load Tech Specs PDF
-pdf_data = get_pdf_bytes("Tech Specs.pdf")
 
 # --- SESSION STATE INITIALIZATION ---
 if 'language' not in st.session_state:
@@ -546,7 +558,7 @@ def render_consumables_accessories(lang="EN"):
         btn_lbl = "🛒 Add to Cart"
 
     t_cons, t_acc = st.tabs(
-        ["Consumables (Consumables)" if lang == "EN" else ("Verbrauchsmaterialien" if lang == "DE" else "المستلزمات الاستهلاكية"),
+        ["Consumables" if lang == "EN" else ("Verbrauchsmaterialien" if lang == "DE" else "المستلزمات الاستهلاكية"),
          "Accessories" if lang == "EN" else ("Zubehör" if lang == "DE" else "الملحقات والبطاريات")]
     )
     rtl_cls = " glass-card-rtl" if lang == "AR" else ""
@@ -653,11 +665,21 @@ def render_album_gallery(lang="EN"):
             try: st.image("Aerivo (5).png", caption="Accessories & Travel Kit", use_container_width=True)
             except: pass
 
-def render_tech_specs_button(label="📄 Tech Specs", filename="Aerivo_M1_Tech_Specs.pdf"):
-    if pdf_data:
-        st.download_button(label=label, data=pdf_data, file_name=filename, mime="application/pdf", use_container_width=True)
+def render_tech_specs_button(lang="EN", label="📄 Tech Specs", download_name=None):
+    source_file = PDF_FILES.get(lang, PDF_FILES["EN"])
+    data = get_pdf_bytes(source_file)
+    out_name = download_name or source_file
+    if data:
+        st.download_button(
+            label=label,
+            data=data,
+            file_name=out_name,
+            mime="application/pdf",
+            use_container_width=True,
+            key=f"dl_pdf_{lang}_{out_name}"
+        )
     else:
-        st.button(f"{label} (PDF Ready on Server)", disabled=True, use_container_width=True)
+        st.button(f"{label} (PDF Missing: {source_file})", disabled=True, use_container_width=True)
 
 def render_main_product_image():
     try:
@@ -695,7 +717,7 @@ def page_english_global():
             if st.button("🛒 Add to Cart", use_container_width=True, type="primary"):
                 add_to_cart("Aerivo M1 Portable Ventilator (Global)", 15500, "USD", "AERV-M1-GLB")
         with col_btn2:
-            render_tech_specs_button("📄 Download Datasheet (PDF)", "Aerivo_M1_Datasheet_EN.pdf")
+            render_tech_specs_button("EN", "📄 Download Datasheet (PDF)", "Portable Medical Ventilator Datasheet.pdf")
 
     with col_img:
         render_main_product_image()
@@ -765,7 +787,7 @@ def page_german():
                 st.session_state.show_rfq = not st.session_state.show_rfq
                 st.rerun()
         with col_btn2:
-            render_tech_specs_button("📄 Datenblatt & Gebrauchsanweisung (DE)", "Aerivo_M1_Datenblatt_IFU_DE.pdf")
+            render_tech_specs_button("DE", "📄 Datenblatt & Gebrauchsanweisung (DE)", "Technisches Datenblatt Beatmungsgerät.pdf")
 
         if st.button("🛒 Direkt in den Beschaffungs-Warenkorb (REF: AERV-M1-DE-01)", use_container_width=True):
             add_to_cart("Aerivo M1 Beatmungssystem (DE-Konfiguration)", 14200, "EUR", "AERV-M1-DE-01")
@@ -996,7 +1018,7 @@ def page_arabic():
             <p>شاهد سهولة تشغيل الجهاز بواجهة واضحة وسريعة أثناء نقل المرضى وحالات الطوارئ الحرجة.</p>
         </div>
         """, unsafe_allow_html=True)
-        st.video("https://www.youtube.com/watch?v=9bZkp7q19f0" if False else "https://youtu.be/dQw4w9WgXcQ") if False else st.markdown("""
+        st.markdown("""
         <div class='glass-card' style='text-align:center; padding: 2.2rem 1.5rem; background: linear-gradient(135deg, rgba(11,42,74,0.88), rgba(27,111,181,0.82)); color:#fff;'>
             <div style='font-size:2.8rem; margin-bottom:0.5rem;'>▶️</div>
             <div style='font-size:1.15rem; font-weight:800; color:#fff;'>العرض السريري المباشر لجهاز Aerivo M1</div>
@@ -1068,7 +1090,7 @@ def page_arabic():
         """, unsafe_allow_html=True)
         c_pdf, c_wa2 = st.columns(2)
         with c_pdf:
-            render_tech_specs_button("📄 تحميل ملف المواصفات الفنية للمناقصات (PDF)", "Aerivo_M1_Tender_Specs_IQ.pdf")
+            render_tech_specs_button("AR", "📄 تحميل ملف المواصفات الفنية للمناقصات (PDF)", "البطاقة الفنية لجهاز التنفس الاصطناعي المحمول.pdf")
         with c_wa2:
             st.markdown("""
                 <a href="https://wa.me/9647700000000?text=Requesting%20KIMADIA%20Tender%20Documents" target="_blank" class="wa-btn-inline">
